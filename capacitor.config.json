@@ -2,11 +2,9 @@
   "appId": "cn.ayou.clashpanel",
   "appName": "Clash Panel",
   "webDir": "dist",
-  "android": {
-    "allowMixedContent": true
-  },
   "server": {
-    "androidScheme": "http",
-    "cleartext": true
+    "url": "http://127.0.0.1:9090/ui/",
+    "cleartext": true,
+    "androidScheme": "http"
   }
 }
