@@ -1,0 +1,12 @@
+{
+  "appId": "cn.ayou.clashpanel",
+  "appName": "Clash Panel",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": true
+  },
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}
