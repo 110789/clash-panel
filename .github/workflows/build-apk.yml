@@ -37,6 +37,40 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Generate app icon from resources/icon.png
+        run: npx @capacitor/assets generate --android --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#000000'
+
+      - name: Apply immersive fullscreen theme
+        run: |
+          python3 - << 'PY'
+          import re
+
+          path = "android/app/src/main/res/values/styles.xml"
+          with open(path, "r", encoding="utf-8") as f:
+              content = f.read()
+
+          extra_items = (
+              '\n        <item name="android:statusBarColor">#000000</item>'
+              '\n        <item name="android:navigationBarColor">#000000</item>'
+              '\n        <item name="android:windowDrawsSystemBarBackgrounds">true</item>'
+              '\n        <item name="android:fitsSystemWindows">false</item>'
+          )
+
+          new_content, count = re.subn(
+              r'(<style name="AppTheme"[^>]*>)',
+              r'\1' + extra_items,
+              content,
+              count=1,
+          )
+
+          if count:
+              with open(path, "w", encoding="utf-8") as f:
+                  f.write(new_content)
+              print("styles.xml patched for immersive fullscreen")
+          else:
+              print("AppTheme style not found, skipped patch (icon/build still proceed)")
+          PY
+
       - name: Build debug APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug
