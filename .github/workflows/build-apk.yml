@@ -40,35 +40,38 @@ jobs:
       - name: Generate app icon from resources/icon.png
         run: npx @capacitor/assets generate --android --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#000000'
 
-      - name: Apply immersive fullscreen theme
+      - name: Enable edge-to-edge (transparent status/nav bars)
         run: |
           python3 - << 'PY'
-          import re
+          import glob, re
 
-          path = "android/app/src/main/res/values/styles.xml"
-          with open(path, "r", encoding="utf-8") as f:
-              content = f.read()
-
-          extra_items = (
-              '\n        <item name="android:statusBarColor">#000000</item>'
-              '\n        <item name="android:navigationBarColor">#000000</item>'
-              '\n        <item name="android:windowDrawsSystemBarBackgrounds">true</item>'
-              '\n        <item name="android:fitsSystemWindows">false</item>'
-          )
-
-          new_content, count = re.subn(
-              r'(<style name="AppTheme"[^>]*>)',
-              r'\1' + extra_items,
-              content,
-              count=1,
-          )
-
-          if count:
-              with open(path, "w", encoding="utf-8") as f:
-                  f.write(new_content)
-              print("styles.xml patched for immersive fullscreen")
+          files = glob.glob("android/app/src/main/java/**/MainActivity.java", recursive=True)
+          if not files:
+              print("MainActivity.java not found, skip")
           else:
-              print("AppTheme style not found, skipped patch (icon/build still proceed)")
+              path = files[0]
+              src = open(path).read()
+              m = re.search(r'^package\s+([\w.]+);', src, re.M)
+              package = m.group(1) if m else "unknown"
+              content = (
+                  f"package {package};\n\n"
+                  "import android.graphics.Color;\n"
+                  "import android.os.Bundle;\n"
+                  "import androidx.core.view.WindowCompat;\n"
+                  "import com.getcapacitor.BridgeActivity;\n\n"
+                  "public class MainActivity extends BridgeActivity {\n"
+                  "    @Override\n"
+                  "    protected void onCreate(Bundle savedInstanceState) {\n"
+                  "        super.onCreate(savedInstanceState);\n"
+                  "        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);\n"
+                  "        getWindow().setStatusBarColor(Color.TRANSPARENT);\n"
+                  "        getWindow().setNavigationBarColor(Color.TRANSPARENT);\n"
+                  "    }\n"
+                  "}\n"
+              )
+              with open(path, "w") as f:
+                  f.write(content)
+              print(f"patched {path}")
           PY
 
       - name: Build debug APK
