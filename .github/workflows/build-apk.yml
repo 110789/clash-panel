@@ -40,7 +40,7 @@ jobs:
       - name: Generate app icon from resources/icon.png
         run: npx @capacitor/assets generate --android --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#000000'
 
-      - name: Enable edge-to-edge (transparent status/nav bars)
+      - name: Enable edge-to-edge with safe-area padding
         run: |
           python3 - << 'PY'
           import glob, re
@@ -57,7 +57,11 @@ jobs:
                   f"package {package};\n\n"
                   "import android.graphics.Color;\n"
                   "import android.os.Bundle;\n"
+                  "import android.view.View;\n"
+                  "import androidx.core.graphics.Insets;\n"
+                  "import androidx.core.view.ViewCompat;\n"
                   "import androidx.core.view.WindowCompat;\n"
+                  "import androidx.core.view.WindowInsetsCompat;\n"
                   "import com.getcapacitor.BridgeActivity;\n\n"
                   "public class MainActivity extends BridgeActivity {\n"
                   "    @Override\n"
@@ -65,7 +69,13 @@ jobs:
                   "        super.onCreate(savedInstanceState);\n"
                   "        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);\n"
                   "        getWindow().setStatusBarColor(Color.TRANSPARENT);\n"
-                  "        getWindow().setNavigationBarColor(Color.TRANSPARENT);\n"
+                  "        getWindow().setNavigationBarColor(Color.TRANSPARENT);\n\n"
+                  "        View content = findViewById(android.R.id.content);\n"
+                  "        ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {\n"
+                  "            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());\n"
+                  "            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);\n"
+                  "            return insets;\n"
+                  "        });\n"
                   "    }\n"
                   "}\n"
               )
